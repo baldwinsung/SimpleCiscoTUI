@@ -59,22 +59,49 @@ pip install -r requirements.txt
 python -m simpleciscotui          # or: pip install -e . && simpleciscotui
 ```
 
-## Connecting
+## Config file (recommended)
 
-Fill in the connect form, or pre-seed it from the environment (handy with a
-local, git-ignored `.env` that `scripts/run.sh` auto-sources):
+Save your devices once in a TOML file and skip the form. The smallest possible
+config is just a host:
+
+```toml
+# config.toml
+[[devices]]
+host = "192.168.1.2"
+```
+
+With no password set, the app authenticates **exactly like `ssh 192.168.1.2`** —
+your SSH agent and the keys in `~/.ssh` — and the username defaults to your
+local login. If there's a single device, **the app connects to it on launch**;
+with several, you get a picker on the connect screen.
+
+The app looks for, in order:
+
+1. `$SIMPLECISCOTUI_CONFIG`
+2. `./config.toml` (next to where you run it)
+3. `~/.config/simpleciscotui/config.toml`
+
+See [`config.example.toml`](config.example.toml) for every option (`name`,
+`username`, `password`, `secret`, `port`, `device_type`, `key_file`, and a
+`[defaults]` table applied to all devices). `config.toml` is git-ignored so your
+device list never lands in the repo.
+
+## Connecting without a config file
+
+You can also just fill in the connect form, or pre-seed it from the environment
+(handy with a local, git-ignored `.env` that `scripts/run.sh` auto-sources):
 
 ```sh
 # .env  — never commit this
 export CISCO_HOST=192.168.1.2
 export CISCO_USERNAME=admin
-export CISCO_PASSWORD=...
-export CISCO_SECRET=...     # enable secret; defaults to the login password
+export CISCO_PASSWORD=...     # leave unset to use SSH key / agent auth
+export CISCO_SECRET=...       # enable secret; defaults to the login password
 export CISCO_PORT=22
 ```
 
-Credentials are only ever held in memory for the session — nothing is written
-to disk by the app.
+Credentials are only ever held in memory for the session — the app writes
+nothing to disk.
 
 ### Legacy switches (Catalyst 2960G and friends)
 
@@ -100,10 +127,13 @@ command-generation logic is testable without a live device.
 ```
 simpleciscotui/
   cisco.py     Netmiko wrapper + pure parsing/command helpers
+  config.py    TOML device config loader (pure parsing)
   app.py       Textual app: Connect → Menu → Apply / Remove / Save screens
   app.tcss     Styles
+config.example.toml   Documented sample config (copy to config.toml)
 tests/
-  test_cisco.py   Parser + command-builder unit tests
+  test_cisco.py    Parser + command-builder unit tests
+  test_config.py   Config parsing + credential tests
 scripts/
   run.sh       Create venv (if needed) and launch
   test.sh      Run the test suite

@@ -15,6 +15,7 @@ venv/
 # Editor / OS
 .DS_Store
 
-# Local credentials — never commit
+# Local credentials / device list — never commit (keep config.example.toml)
 .env
 *.env
+config.toml

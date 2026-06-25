@@ -10,6 +10,7 @@ All network calls run in Textual thread workers so the UI never blocks.
 
 from __future__ import annotations
 
+import getpass
 import os
 
 from textual import on, work
@@ -28,6 +29,7 @@ from textual.widgets import (
 )
 
 from .cisco import CiscoCredentials, CiscoSession
+from .config import ConfigError, DeviceConfig, load_config
 
 
 class StatusLog(RichLog):
@@ -49,9 +51,20 @@ class StatusLog(RichLog):
 
 
 class ConnectScreen(Screen):
-    """Collect credentials and open a session."""
+    """Pick a saved device (from config) or type credentials, then connect."""
 
     TITLE = "Connect"
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._config_error = ""
+        self._selected_key_file: str | None = None
+        try:
+            self._devices = load_config().devices
+        except ConfigError as exc:
+            self._devices = []
+            self._config_error = str(exc)
+        self._by_name = {d.name: d for d in self._devices}
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -59,6 +72,12 @@ class ConnectScreen(Screen):
             with Center():
                 with Vertical(id="connect-box"):
                     yield Label("Connect to a Cisco device", id="connect-title")
+                    if self._devices:
+                        yield Select(
+                            [(d.label, d.name) for d in self._devices],
+                            id="device",
+                            prompt="Saved device",
+                        )
                     yield Input(
                         placeholder="Host / IP",
                         id="host",
@@ -70,7 +89,7 @@ class ConnectScreen(Screen):
                         value=os.environ.get("CISCO_USERNAME", ""),
                     )
                     yield Input(
-                        placeholder="Password",
+                        placeholder="Password (blank = use SSH key)",
                         password=True,
                         id="password",
                         value=os.environ.get("CISCO_PASSWORD", ""),
@@ -89,6 +108,38 @@ class ConnectScreen(Screen):
                     yield Button("Connect", variant="primary", id="connect")
                     yield Label("", id="connect-error")
         yield Footer()
+
+    def on_mount(self) -> None:
+        if self._config_error:
+            self.query_one("#connect-error", Label).update(
+                f"[red]Config: {self._config_error}[/]"
+            )
+            return
+        # Exactly one saved device → fill it in and connect straight away.
+        if len(self._devices) == 1:
+            device = self._devices[0]
+            self._apply_device(device)
+            self.query_one("#connect-error", Label).update(
+                f"[yellow]Connecting to {device.label}…[/]"
+            )
+            self._start_connect(device.to_credentials())
+
+    @on(Select.Changed, "#device")
+    def _device_changed(self, event: Select.Changed) -> None:
+        if event.value == Select.BLANK:
+            return
+        device = self._by_name.get(str(event.value))
+        if device is not None:
+            self._apply_device(device)
+
+    def _apply_device(self, device: DeviceConfig) -> None:
+        self.query_one("#host", Input).value = device.host
+        self.query_one("#username", Input).value = device.username or getpass.getuser()
+        self.query_one("#password", Input).value = device.password
+        self.query_one("#secret", Input).value = device.secret
+        self.query_one("#port", Input).value = str(device.port)
+        self._selected_key_file = device.key_file
+        self.query_one("#connect", Button).focus()
 
     @on(Input.Submitted)
     @on(Button.Pressed, "#connect")
@@ -110,14 +161,19 @@ class ConnectScreen(Screen):
             return
 
         error.update("[yellow]Connecting…[/]")
-        self.query_one("#connect", Button).disabled = True
-        creds = CiscoCredentials(
-            host=host,
-            username=username,
-            password=password,
-            secret=secret,
-            port=port,
+        self._start_connect(
+            CiscoCredentials(
+                host=host,
+                username=username,
+                password=password,
+                secret=secret,
+                port=port,
+                key_file=self._selected_key_file,
+            )
         )
+
+    def _start_connect(self, creds: CiscoCredentials) -> None:
+        self.query_one("#connect", Button).disabled = True
         self._connect_worker(creds)
 
     @work(thread=True, exclusive=True)

@@ -9,6 +9,7 @@ without a live device. Everything that touches the wire lives on
 
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass, field
 from typing import Optional
@@ -60,25 +61,45 @@ class InterfaceAcls:
 
 @dataclass
 class CiscoCredentials:
-    """Connection parameters for a single device."""
+    """Connection parameters for a single device.
+
+    Leave ``password`` blank to authenticate the same way ``ssh <host>`` does —
+    via the SSH agent and the keys in ``~/.ssh`` (plus ``key_file`` if set).
+    """
 
     host: str
     username: str
-    password: str
+    password: str = ""
     secret: str = ""  # enable secret; falls back to password if blank
     port: int = 22
     device_type: str = "cisco_ios"
+    key_file: Optional[str] = None  # explicit private key path (optional)
+
+    @property
+    def uses_password(self) -> bool:
+        return bool(self.password)
 
     def netmiko_kwargs(self) -> dict:
-        return {
+        kwargs: dict = {
             "device_type": self.device_type,
             "host": self.host,
             "username": self.username,
-            "password": self.password,
-            "secret": self.secret or self.password,
             "port": self.port,
+            "secret": self.secret or self.password,
             "fast_cli": False,
         }
+        if self.password:
+            kwargs["password"] = self.password
+        else:
+            # No password: fall back to SSH key / agent auth, exactly like
+            # running `ssh <host>` would.
+            kwargs["password"] = ""
+            kwargs["use_keys"] = True
+            kwargs["allow_agent"] = True
+        if self.key_file:
+            kwargs["key_file"] = os.path.expanduser(self.key_file)
+            kwargs["use_keys"] = True
+        return kwargs
 
 
 # --------------------------------------------------------------------------- #

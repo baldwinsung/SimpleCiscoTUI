@@ -32,8 +32,20 @@ Two modules, with a deliberate seam between pure logic and network I/O:
   - Netmiko is imported lazily so the parsing helpers (and their tests) work
     without the dependency installed.
 
+- **`simpleciscotui/config.py`** — optional TOML config loader (also pure /
+  unit-tested via `parse_config`). `DeviceConfig.to_credentials()` defaults the
+  username to `getpass.getuser()` and leaves the password blank, so a host-only
+  entry authenticates like `ssh <host>` (SSH agent + `~/.ssh` keys). Search
+  order: `$SIMPLECISCOTUI_CONFIG` → `./config.toml` → `~/.config/simpleciscotui/
+  config.toml`. `config.toml` is git-ignored; `config.example.toml` is the
+  shipped sample.
+
 - **`simpleciscotui/app.py`** — the Textual app. Screen flow:
   `ConnectScreen → MenuScreen → {ApplyAclScreen, RemoveAclScreen, SaveScreen}`.
+  - `ConnectScreen` loads the config in `__init__`; a single saved device
+    auto-connects from `on_mount`, multiple devices populate a `#device`
+    `Select`. Key auth is implicit: a blank password → `use_keys`/`allow_agent`
+    in `CiscoCredentials.netmiko_kwargs()`.
   - `ApplyAclScreen`/`RemoveAclScreen` share `_OperationScreen` (interface
     picker + status log). Remove also loads live bindings per interface.
   - `StatusLog` is a `RichLog` subclass with `ok`/`err`/`info`/`device` helpers.
@@ -66,9 +78,10 @@ There is **no CI** — tests are run locally via `scripts/test.sh`.
 
 ## Conventions
 
-- Credentials come from the connect form or `CISCO_*` env vars
+- Credentials come from `config.toml`, the connect form, or `CISCO_*` env vars
   (`CISCO_HOST`, `CISCO_USERNAME`, `CISCO_PASSWORD`, `CISCO_SECRET`,
-  `CISCO_PORT`). Never write credentials to disk; `.env` is git-ignored.
+  `CISCO_PORT`). The app never writes credentials to disk; `.env` and
+  `config.toml` are git-ignored.
 - License is MIT; attribution line on user-facing docs is
   "Built with Claude Code (Opus)".
 - When adding a screen, register its buttons with `@on(Button.Pressed, "#id")`
