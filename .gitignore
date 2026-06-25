@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# Test / tooling
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Editor / OS
+.DS_Store
+
+# Local credentials — never commit
+.env
+*.env

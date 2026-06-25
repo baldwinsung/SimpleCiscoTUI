@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "simpleciscotui"
+version = "0.1.0"
+description = "A tiny terminal UI to manage interface ACLs on a Cisco IOS device."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Baldwin Sung" }]
+keywords = ["cisco", "ios", "tui", "netmiko", "textual", "acl", "networking"]
+dependencies = [
+    "textual>=0.60",
+    "netmiko>=4.3",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "textual-dev>=1.5"]
+
+[project.scripts]
+simpleciscotui = "simpleciscotui.app:main"
+
+[project.urls]
+Homepage = "https://github.com/baldwinsung/SimpleCiscoTUI"
+
+[tool.setuptools.packages.find]
+include = ["simpleciscotui*"]
+
+[tool.setuptools.package-data]
+simpleciscotui = ["*.tcss"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

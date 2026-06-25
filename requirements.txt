@@ -1,0 +1,2 @@
+textual>=0.60
+netmiko>=4.3

@@ -1,0 +1,138 @@
+/* SimpleCiscoTUI styles */
+
+Screen {
+    background: $surface;
+}
+
+/* -- connect screen ---------------------------------------------------- */
+
+#connect-box {
+    width: 56;
+    height: auto;
+    padding: 1 2;
+    border: round $primary;
+    background: $panel;
+}
+
+#connect-title {
+    text-style: bold;
+    color: $accent;
+    margin-bottom: 1;
+    width: 100%;
+    text-align: center;
+}
+
+#connect-box Input {
+    margin-bottom: 1;
+}
+
+#connect-box Button {
+    width: 100%;
+    margin-top: 1;
+}
+
+#connect-error {
+    width: 100%;
+    text-align: center;
+    margin-top: 1;
+}
+
+/* -- menu screen ------------------------------------------------------- */
+
+#menu-layout,
+#op-layout {
+    height: 1fr;
+}
+
+#menu-actions {
+    width: 40;
+    padding: 1 2;
+    border-right: solid $primary-darken-2;
+}
+
+#menu-actions Button {
+    width: 100%;
+    margin-bottom: 1;
+}
+
+#target {
+    margin-bottom: 1;
+    padding-bottom: 1;
+    border-bottom: solid $primary-darken-2;
+}
+
+/* -- operation screens ------------------------------------------------- */
+
+#op-form {
+    width: 48;
+    padding: 1 2;
+    border-right: solid $primary-darken-2;
+}
+
+.op-title {
+    text-style: bold;
+    color: $accent;
+    margin-bottom: 1;
+}
+
+#op-form Input,
+#op-form Select {
+    margin-bottom: 1;
+}
+
+.op-buttons {
+    height: auto;
+    margin-top: 1;
+}
+
+.op-buttons Button {
+    margin-right: 2;
+}
+
+/* -- shared log -------------------------------------------------------- */
+
+#log {
+    width: 1fr;
+    height: 1fr;
+    padding: 1 2;
+    background: $surface-darken-1;
+}
+
+/* -- save modal -------------------------------------------------------- */
+
+SaveScreen {
+    align: center middle;
+}
+
+#save-box {
+    width: 64;
+    height: auto;
+    padding: 1 2;
+    border: thick $primary;
+    background: $panel;
+}
+
+#save-title {
+    text-style: bold;
+    color: $accent;
+    margin-bottom: 1;
+}
+
+#save-body {
+    margin-bottom: 1;
+}
+
+#save-box #log {
+    height: 8;
+    background: $surface-darken-1;
+}
+
+#save-buttons {
+    height: auto;
+    margin-top: 1;
+    align: center middle;
+}
+
+#save-buttons Button {
+    margin: 0 1;
+}
