@@ -1,5 +1,9 @@
 # SimpleCiscoTUI
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)
+[![Built with Textual](https://img.shields.io/badge/built%20with-Textual-5a4fcf.svg)](https://textual.textualize.io)
+
 A tiny terminal UI for the three Cisco IOS chores you reach for most when
 shuffling interface ACLs:
 
@@ -9,16 +13,7 @@ shuffling interface ACLs:
 
 > Built with [Claude Code](https://claude.com/claude-code) (Opus).
 
-```
-┌ SimpleCiscoTUI ────────────────────────────────────────────────┐
-│ Device: 172.16.0.1          ✓ Connected to 172.16.0.1          │
-│                             · Loaded 6 interface(s).           │
-│ Apply ACL to interface      ✓ Applied ZONE-APP-IN in on Vlan10 │
-│ Remove ACL from interface                                      │
-│ Copy run → startup (save)                                      │
-│ Disconnect                                                     │
-└────────────────────────────────────────────────────────────────┘
-```
+![SimpleCiscoTUI — main menu](docs/menu.svg)
 
 It drives your **system `ssh` client** (under a PTY, via [pexpect]) rather than a
 Python SSH library — so it inherits everything in your `~/.ssh/config` (keys,
@@ -44,6 +39,8 @@ actually attached instead of guessing names.
 
 Move around with the **arrow keys** or **Tab**; every action prints the exact
 IOS commands and the device's reply in the side log.
+
+![SimpleCiscoTUI — applying an ACL](docs/apply.svg)
 
 ## Install & run
 
@@ -136,7 +133,8 @@ needed `ssh -o` flags for you.
 ## Develop
 
 ```sh
-scripts/test.sh        # run the parser unit tests
+scripts/test.sh                              # run the parser unit tests
+.venv/bin/python scripts/screenshot.py       # regenerate docs/*.svg screenshots
 textual run --dev simpleciscotui.app:SimpleCiscoTUI   # with the Textual console
 ```
 
@@ -154,12 +152,14 @@ simpleciscotui/
   app.py       Textual app: Connect → Menu → Apply / Remove / Save screens
   app.tcss     Styles
 config.example.toml   Documented sample config (copy to config.toml)
+docs/                 SVG screenshots used in this README
 tests/
   test_cisco.py    Parser + command-builder unit tests
   test_config.py   Config parsing + credential tests
 scripts/
-  run.sh       Create venv (if needed) and launch
-  test.sh      Run the test suite
+  run.sh           Create venv (if needed) and launch
+  test.sh          Run the test suite
+  screenshot.py    Regenerate the README screenshots (headless, no device)
 ```
 
 ## Safety notes
