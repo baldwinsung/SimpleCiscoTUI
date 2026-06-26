@@ -4,9 +4,9 @@ Save devices so you don't retype connection details. The smallest valid file is
 just a host:
 
     [[devices]]
-    host = "192.168.1.2"
+    host = "172.16.0.1"
 
-With no password set, the app authenticates the same way ``ssh 192.168.1.2``
+With no password set, the app authenticates the same way ``ssh 172.16.0.1``
 does — your SSH agent and the keys in ``~/.ssh`` — and the username defaults to
 your local login. One saved device → the app connects to it on launch.
 

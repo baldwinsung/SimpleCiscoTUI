@@ -10,13 +10,13 @@ shuffling interface ACLs:
 > Built with [Claude Code](https://claude.com/claude-code) (Opus).
 
 ```
-┌ SimpleCiscoTUI ───────────────────────────────────────────────┐
-│ Device: 192.168.1.2          ✓ Connected to 192.168.1.2        │
-│                              · Loaded 6 interface(s).          │
-│  Apply ACL to interface      ✓ Applied ZONE-APP-IN in on Vlan10│
-│  Remove ACL from interface                                     │
-│  Copy run → startup (save)                                     │
-│  Disconnect                                                    │
+┌ SimpleCiscoTUI ────────────────────────────────────────────────┐
+│ Device: 172.16.0.1          ✓ Connected to 172.16.0.1          │
+│                             · Loaded 6 interface(s).           │
+│ Apply ACL to interface      ✓ Applied ZONE-APP-IN in on Vlan10 │
+│ Remove ACL from interface                                      │
+│ Copy run → startup (save)                                      │
+│ Disconnect                                                     │
 └────────────────────────────────────────────────────────────────┘
 ```
 
@@ -41,6 +41,9 @@ The **Apply** and **Remove** screens pull the live interface list from
 `show ip interface brief`, and **Remove** reads the interface's current ACL
 bindings (`show running-config interface <intf>`) so you pick from what's
 actually attached instead of guessing names.
+
+Move around with the **arrow keys** or **Tab**; every action prints the exact
+IOS commands and the device's reply in the side log.
 
 ## Install & run
 
@@ -69,10 +72,10 @@ config is just a host:
 ```toml
 # config.toml
 [[devices]]
-host = "192.168.1.2"
+host = "172.16.0.1"
 ```
 
-With no password set, the app authenticates **exactly like `ssh 192.168.1.2`** —
+With no password set, the app authenticates **exactly like `ssh 172.16.0.1`** —
 your SSH agent and the keys in `~/.ssh` — and the username defaults to your
 local login. If there's a single device, **the app connects to it on launch**;
 with several, you get a picker on the connect screen.
@@ -94,7 +97,7 @@ crypto options old IOS needs), so a device works even **without** a matching
 
 ```toml
 [[devices]]
-host = "192.168.1.2"
+host = "172.16.0.1"
 key_file = "~/path/to/id_rsa"   # ssh -i  (needed if the key isn't ~/.ssh/id_rsa)
 legacy_ssh = true               # add ssh-rsa / dh-group14-sha1 / aes-cbc for old IOS
 ```
@@ -106,10 +109,10 @@ You can also just fill in the connect form, or pre-seed it from the environment
 
 ```sh
 # .env  — never commit this
-export CISCO_HOST=192.168.1.2
+export CISCO_HOST=172.16.0.1
 export CISCO_USERNAME=admin
 export CISCO_PASSWORD=...     # leave unset to use SSH key / agent auth
-export CISCO_SECRET=...       # enable secret; defaults to the login password
+export CISCO_SECRET=...       # enable secret, sent after login if set
 export CISCO_PORT=22
 ```
 
@@ -165,8 +168,8 @@ scripts/
   app does exactly what you tell it and shows the resulting device output — it
   does not second-guess your rules.
 - Changes are live immediately but **not persisted** until you run **Save**
-  (`copy run start`). Conversely, a bad change you *haven't* saved can be
-  rolled back with a device reload.
+  (`write memory`). Conversely, a bad change you *haven't* saved can be rolled
+  back with a device reload.
 
 ## License
 

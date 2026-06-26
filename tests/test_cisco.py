@@ -15,7 +15,7 @@ from simpleciscotui.cisco import (
 
 BRIEF = """\
 Interface              IP-Address      OK? Method Status                Protocol
-Vlan1                  192.168.1.2     YES NVRAM  up                    up
+Vlan1                  172.16.0.1      YES NVRAM  up                    up
 Vlan10                 10.10.10.1      YES manual up                    up
 Vlan20                 10.10.20.1      YES manual administratively down down
 GigabitEthernet0/1     unassigned      YES unset  up                    up
@@ -28,7 +28,7 @@ def test_parse_interface_brief_counts_and_fields():
     assert len(rows) == 5
     vlan1 = rows[0]
     assert vlan1.name == "Vlan1"
-    assert vlan1.ip == "192.168.1.2"
+    assert vlan1.ip == "172.16.0.1"
     assert vlan1.status == "up"
     assert vlan1.protocol == "up"
     assert vlan1.is_up is True

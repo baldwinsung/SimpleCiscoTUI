@@ -6,13 +6,13 @@ from simpleciscotui.config import ConfigError, parse_config
 
 
 def test_minimal_host_only():
-    devices = parse_config('[[devices]]\nhost = "192.168.1.2"\n')
+    devices = parse_config('[[devices]]\nhost = "172.16.0.1"\n')
     assert len(devices) == 1
     d = devices[0]
-    assert d.host == "192.168.1.2"
-    assert d.name == "192.168.1.2"  # name defaults to host
+    assert d.host == "172.16.0.1"
+    assert d.name == "172.16.0.1"  # name defaults to host
     assert d.port == 22
-    assert d.label == "192.168.1.2"
+    assert d.label == "172.16.0.1"
 
 
 def test_defaults_are_merged_and_overridable():
@@ -22,17 +22,17 @@ def test_defaults_are_merged_and_overridable():
     port = 2222
 
     [[devices]]
-    host = "192.168.1.2"
+    host = "172.16.0.1"
     name = "SW1"
 
     [[devices]]
-    host = "192.168.1.3"
+    host = "172.16.0.2"
     port = 22
     """
     devices = parse_config(text)
     assert devices[0].username == "admin" and devices[0].port == 2222
     assert devices[0].name == "SW1"
-    assert devices[0].label == "SW1  (192.168.1.2)"
+    assert devices[0].label == "SW1  (172.16.0.1)"
     # per-device value overrides the default
     assert devices[1].port == 22
 
@@ -48,11 +48,11 @@ def test_unknown_key_raises():
 
 
 def test_no_password_uses_batchmode_key_auth():
-    creds = parse_config('[[devices]]\nhost = "192.168.1.2"\nusername = "admin"\n')[0].to_credentials()
+    creds = parse_config('[[devices]]\nhost = "172.16.0.1"\nusername = "admin"\n')[0].to_credentials()
     assert creds.uses_password is False
     opts = creds.ssh_options()
     assert "BatchMode=yes" in opts  # never blocks on a password prompt
-    assert creds.target() == "admin@192.168.1.2"
+    assert creds.target() == "admin@172.16.0.1"
 
 
 def test_password_disables_batchmode():
