@@ -14,6 +14,7 @@ import getpass
 import os
 
 from textual import on, work
+from textual.binding import Binding
 from textual.app import App, ComposeResult
 from textual.containers import Center, Horizontal, Middle, Vertical
 from textual.screen import ModalScreen, Screen
@@ -490,10 +491,23 @@ class SimpleCiscoTUI(App):
 
     CSS_PATH = "app.tcss"
     TITLE = "SimpleCiscoTUI"
-    BINDINGS = [("ctrl+q", "quit", "Quit")]
+    BINDINGS = [
+        ("ctrl+q", "quit", "Quit"),
+        # Move focus with the arrow keys too, not just Tab/Shift+Tab. Hidden
+        # from the footer to keep it tidy. An expanded Select still consumes
+        # up/down for its own option list, so dropdown navigation is unaffected.
+        Binding("down", "focus_next", "Next field", show=False),
+        Binding("up", "focus_previous", "Previous field", show=False),
+    ]
 
     #: set after a successful connection
     session: CiscoSession | None = None
+
+    def action_focus_next(self) -> None:
+        self.screen.focus_next()
+
+    def action_focus_previous(self) -> None:
+        self.screen.focus_previous()
 
     def on_mount(self) -> None:
         self.push_screen(ConnectScreen())
