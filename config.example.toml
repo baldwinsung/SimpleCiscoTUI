@@ -12,7 +12,6 @@
 [defaults]
 # username = "admin"        # omit → defaults to your local login (like `ssh host`)
 # port = 22
-# device_type = "cisco_ios"
 
 # Smallest possible entry: just a host. With no password set, the app
 # authenticates exactly like `ssh 192.168.1.2` — your SSH agent and ~/.ssh keys.
@@ -20,9 +19,10 @@
 host = "192.168.1.2"
 # name = "SW1"              # label in the picker (defaults to the host)
 # username = "admin"
-# password = "..."         # omit to use SSH key / agent auth
+# password = "..."         # only used if `sshpass` is installed; key auth preferred
 # secret = "..."           # enable secret, if your login isn't already priv-15
-# key_file = "~/.ssh/id_rsa"   # only if you need a specific (non-default) key
+# key_file = "~/.ssh/id_rsa"   # ssh -i; needed if the key isn't the default one
+# legacy_ssh = true        # add ssh-rsa / dh-group14-sha1 / aes-cbc for old IOS
 
 # [[devices]]
 # host = "192.168.1.3"

@@ -10,10 +10,10 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Baldwin Sung" }]
-keywords = ["cisco", "ios", "tui", "netmiko", "textual", "acl", "networking"]
+keywords = ["cisco", "ios", "tui", "ssh", "textual", "acl", "networking"]
 dependencies = [
     "textual>=0.60",
-    "netmiko>=4.3",
+    "pexpect>=4.8",
 ]
 
 [project.optional-dependencies]

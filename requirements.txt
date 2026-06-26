@@ -1,2 +1,2 @@
 textual>=0.60
-netmiko>=4.3
+pexpect>=4.8

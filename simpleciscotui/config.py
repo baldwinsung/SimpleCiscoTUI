@@ -42,8 +42,8 @@ _ALLOWED_KEYS = {
     "password",
     "secret",
     "port",
-    "device_type",
     "key_file",
+    "legacy_ssh",
 }
 
 
@@ -59,8 +59,8 @@ class DeviceConfig:
     password: str = ""
     secret: str = ""
     port: int = 22
-    device_type: str = "cisco_ios"
     key_file: Optional[str] = None
+    legacy_ssh: bool = False
 
     def __post_init__(self) -> None:
         if not self.name:
@@ -77,8 +77,8 @@ class DeviceConfig:
             password=self.password,
             secret=self.secret,
             port=self.port,
-            device_type=self.device_type,
             key_file=self.key_file,
+            legacy_ssh=self.legacy_ssh,
         )
 
 

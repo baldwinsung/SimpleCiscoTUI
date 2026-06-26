@@ -20,11 +20,13 @@ shuffling interface ACLs:
 └────────────────────────────────────────────────────────────────┘
 ```
 
-It speaks plain SSH to the device through [Netmiko]'s `cisco_ios` driver
-(enable mode, config mode, `copy run start`), and renders with [Textual]. Every
-network call runs on a worker thread, so the UI never freezes mid-operation.
+It drives your **system `ssh` client** (under a PTY, via [pexpect]) rather than a
+Python SSH library — so it inherits everything in your `~/.ssh/config` (keys,
+host aliases, and the legacy crypto old IOS needs) and works wherever plain
+`ssh <host>` already works. It renders with [Textual], and every network call
+runs on a worker thread so the UI never freezes mid-operation.
 
-[Netmiko]: https://github.com/ktbyers/netmiko
+[pexpect]: https://github.com/pexpect/pexpect
 [Textual]: https://github.com/Textualize/textual
 
 ## What it does
@@ -33,7 +35,7 @@ network call runs on a worker thread, so the UI never freezes mid-operation.
 |--------|--------------------------|
 | Apply ACL | `interface <intf>` → `ip access-group <acl> <in\|out>` |
 | Remove ACL | `interface <intf>` → `no ip access-group <acl> <in\|out>` |
-| Save | `copy running-config startup-config` (Netmiko `save_config`) |
+| Save | `write memory` (copy running-config → startup-config) |
 
 The **Apply** and **Remove** screens pull the live interface list from
 `show ip interface brief`, and **Remove** reads the interface's current ACL
@@ -42,7 +44,7 @@ actually attached instead of guessing names.
 
 ## Install & run
 
-Requires Python 3.10+.
+Requires Python 3.11+ and the `ssh` client on your `PATH`.
 
 ```sh
 git clone https://github.com/baldwinsung/SimpleCiscoTUI.git
@@ -50,7 +52,7 @@ cd SimpleCiscoTUI
 scripts/run.sh
 ```
 
-`scripts/run.sh` creates a local `.venv`, installs `textual` + `netmiko` on
+`scripts/run.sh` creates a local `.venv`, installs `textual` + `pexpect` on
 first run, and launches the app. Or do it by hand:
 
 ```sh
@@ -82,9 +84,20 @@ The app looks for, in order:
 3. `~/.config/simpleciscotui/config.toml`
 
 See [`config.example.toml`](config.example.toml) for every option (`name`,
-`username`, `password`, `secret`, `port`, `device_type`, `key_file`, and a
+`username`, `password`, `secret`, `port`, `key_file`, `legacy_ssh`, and a
 `[defaults]` table applied to all devices). `config.toml` is git-ignored so your
 device list never lands in the repo.
+
+`key_file` and `legacy_ssh` map straight onto `ssh` flags (`-i`, and the `-o`
+crypto options old IOS needs), so a device works even **without** a matching
+`~/.ssh/config` block:
+
+```toml
+[[devices]]
+host = "192.168.1.2"
+key_file = "~/path/to/id_rsa"   # ssh -i  (needed if the key isn't ~/.ssh/id_rsa)
+legacy_ssh = true               # add ssh-rsa / dh-group14-sha1 / aes-cbc for old IOS
+```
 
 ## Connecting without a config file
 
@@ -103,12 +116,19 @@ export CISCO_PORT=22
 Credentials are only ever held in memory for the session — the app writes
 nothing to disk.
 
+> **Password auth:** because the app drives the real `ssh` client with
+> `BatchMode` on (so the TUI never blocks on a hidden prompt), a configured
+> password is only used if [`sshpass`](https://linux.die.net/man/1/sshpass) is
+> installed. **Key / agent auth is the supported path.** An `enable` secret, if
+> set, is sent after login.
+
 ### Legacy switches (Catalyst 2960G and friends)
 
-Older IOS boxes negotiate dated SSH crypto (`diffie-hellman-group14-sha1`,
-`ssh-rsa` host keys). Modern Paramiko still offers these, so Netmiko generally
-connects fine. If a device is *too* old and the handshake fails, add the legacy
-algorithms to your `~/.ssh/config` and Netmiko will inherit them.
+Older IOS boxes need dated SSH crypto (`diffie-hellman-group14-sha1`, `ssh-rsa`
+host/pubkey algorithms, `aes-cbc`/`3des-cbc`). Since the app uses your system
+`ssh`, anything already working in `~/.ssh/config` just works. If you'd rather
+keep it in the app, set `legacy_ssh = true` on the device and it passes the
+needed `ssh -o` flags for you.
 
 ## Develop
 
@@ -126,7 +146,7 @@ command-generation logic is testable without a live device.
 
 ```
 simpleciscotui/
-  cisco.py     Netmiko wrapper + pure parsing/command helpers
+  cisco.py     system-ssh/pexpect session + pure parsing/command helpers
   config.py    TOML device config loader (pure parsing)
   app.py       Textual app: Connect → Menu → Apply / Remove / Save screens
   app.tcss     Styles
