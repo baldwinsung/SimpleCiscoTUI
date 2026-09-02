@@ -1,8 +1,8 @@
 # SimpleCiscoTUI
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)
-[![Built with Textual](https://img.shields.io/badge/built%20with-Textual-5a4fcf.svg)](https://textual.textualize.io)
+![Go](https://img.shields.io/badge/go-1.24%2B-00ADD8.svg)
+[![Built with tview](https://img.shields.io/badge/built%20with-tview-5a4fcf.svg)](https://github.com/rivo/tview)
 
 A tiny terminal UI for the three Cisco IOS chores you reach for most when
 shuffling interface ACLs:
@@ -13,16 +13,14 @@ shuffling interface ACLs:
 
 > Built with [Claude Code](https://claude.com/claude-code) (Opus).
 
-![SimpleCiscoTUI — main menu](docs/menu.svg)
+It drives your **system `ssh` client** (under a PTY, via [creack/pty]) rather
+than a Go SSH library — so it inherits everything in your `~/.ssh/config`
+(keys, host aliases, and the legacy crypto old IOS needs) and works wherever
+plain `ssh <host>` already works. It renders with [tview], and every device
+call runs in its own goroutine so the UI never freezes mid-operation.
 
-It drives your **system `ssh` client** (under a PTY, via [pexpect]) rather than a
-Python SSH library — so it inherits everything in your `~/.ssh/config` (keys,
-host aliases, and the legacy crypto old IOS needs) and works wherever plain
-`ssh <host>` already works. It renders with [Textual], and every network call
-runs on a worker thread so the UI never freezes mid-operation.
-
-[pexpect]: https://github.com/pexpect/pexpect
-[Textual]: https://github.com/Textualize/textual
+[creack/pty]: https://github.com/creack/pty
+[tview]: https://github.com/rivo/tview
 
 ## What it does
 
@@ -40,11 +38,9 @@ actually attached instead of guessing names.
 Move around with the **arrow keys** or **Tab**; every action prints the exact
 IOS commands and the device's reply in the side log.
 
-![SimpleCiscoTUI — applying an ACL](docs/apply.svg)
-
 ## Install & run
 
-Requires Python 3.11+ and the `ssh` client on your `PATH`.
+Requires Go 1.24+ and the `ssh` client on your `PATH`.
 
 ```sh
 git clone https://github.com/baldwinsung/SimpleCiscoTUI.git
@@ -52,13 +48,11 @@ cd SimpleCiscoTUI
 scripts/run.sh
 ```
 
-`scripts/run.sh` creates a local `.venv`, installs `textual` + `pexpect` on
-first run, and launches the app. Or do it by hand:
+`scripts/run.sh` is just `go run .`. Or build a binary:
 
 ```sh
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-python -m simpleciscotui          # or: pip install -e . && simpleciscotui
+go build -o simpleciscotui .
+./simpleciscotui
 ```
 
 ## Config file (recommended)
@@ -133,33 +127,39 @@ needed `ssh -o` flags for you.
 ## Develop
 
 ```sh
-scripts/test.sh                              # run the parser unit tests
-.venv/bin/python scripts/screenshot.py       # regenerate docs/*.svg screenshots
-textual run --dev simpleciscotui.app:SimpleCiscoTUI   # with the Textual console
+scripts/test.sh                              # go test ./... — parser/config unit tests
+go vet ./...
 ```
 
-The pure parsing/command helpers in `simpleciscotui/cisco.py`
-(`parse_interface_brief`, `parse_interface_acls`, `build_apply_commands`, …)
-carry no network I/O and are fully covered by `tests/test_cisco.py`, so the
+The pure parsing/command helpers in `internal/cisco/cisco.go`
+(`ParseInterfaceBrief`, `ParseInterfaceAcls`, `BuildApplyCommands`, …) carry
+no network I/O and are fully covered by `internal/cisco/cisco_test.go`, so the
 command-generation logic is testable without a live device.
 
 ## Project layout
 
 ```
-simpleciscotui/
-  cisco.py     system-ssh/pexpect session + pure parsing/command helpers
-  config.py    TOML device config loader (pure parsing)
-  app.py       Textual app: Connect → Menu → Apply / Remove / Save screens
-  app.tcss     Styles
+main.go                        Entry point
+internal/
+  cisco/
+    cisco.go     Pure parsing/command helpers + Credentials
+    session.go   System-ssh/PTY session (connect, run commands)
+    expect.go    pexpect-style buffered regex matching over the PTY
+  config/
+    config.go    TOML device config loader (pure parsing)
+  tui/
+    app.go       tview Application, screen stack, global key handling
+    connect.go   Connect screen
+    menu.go      Main menu
+    apply.go     Apply ACL screen
+    remove.go    Remove ACL screen
+    save.go      Save (copy run → startup) screen
+    statuslog.go Shared color-coded output pane
+    layout.go    Centered fixed-size box helper
 config.example.toml   Documented sample config (copy to config.toml)
-docs/                 SVG screenshots used in this README
-tests/
-  test_cisco.py    Parser + command-builder unit tests
-  test_config.py   Config parsing + credential tests
 scripts/
-  run.sh           Create venv (if needed) and launch
-  test.sh          Run the test suite
-  screenshot.py    Regenerate the README screenshots (headless, no device)
+  run.sh           go run .
+  test.sh          go test ./...
 ```
 
 ## Safety notes
